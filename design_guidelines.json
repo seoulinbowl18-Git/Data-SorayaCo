@@ -1,0 +1,143 @@
+{
+  "app_name": "BroDo Style E-commerce",
+  "personality": "1 iOS-Native Clean with 5 Brutalist structured minimalism",
+  "personality_one_liner": "A bold, minimalist, and masculine fashion e-commerce experience driven by high-contrast black and white, sharp typography, and premium photography.",
+  "color": {
+    "surface": "#FFFFFF",
+    "onSurface": "#1A1A1A",
+    "surfaceSecondary": "#F5F5F5",
+    "onSurfaceSecondary": "#333333",
+    "surfaceTertiary": "#EAEAEA",
+    "onSurfaceTertiary": "#1A1A1A",
+    "surfaceInverse": "#111111",
+    "onSurfaceInverse": "#FFFFFF",
+    "brand": "#000000",
+    "brandPrimary": "#000000",
+    "onBrandPrimary": "#FFFFFF",
+    "brandSecondary": "#333333",
+    "onBrandSecondary": "#FFFFFF",
+    "brandTertiary": "#F0F0F0",
+    "onBrandTertiary": "#000000",
+    "success": "#2E7D32",
+    "onSuccess": "#FFFFFF",
+    "warning": "#F57C00",
+    "onWarning": "#FFFFFF",
+    "error": "#D32F2F",
+    "onError": "#FFFFFF",
+    "info": "#1A1A1A",
+    "onInfo": "#FFFFFF",
+    "border": "#E5E5E5",
+    "borderStrong": "#111111",
+    "divider": "#EEEEEE"
+  },
+  "typography": {
+    "displayFontFamily": "Plus Jakarta Sans",
+    "textFontFamily": "Geist",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Generous vertical rhythm but structured like a magazine. Use padding deliberately to create breathing room between sections. Do not cramp product cards.",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 4,
+    "md": 8,
+    "lg": 12,
+    "pill": 999
+  },
+  "shadow_tier": "0",
+  "navigation": "bottom_tabs",
+  "icon_set": "Phosphor",
+  "glassmorphism": {
+    "enabled": "false",
+    "do's": ["Use solid white or #F5F5F5 surfaces to maintain the sharp, flat, and minimalist aesthetic"],
+    "dont's": ["Do not use blur or glassmorphism, it conflicts with the stark masculine minimalism requested"]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "Home",
+      "purpose": "A premium landing experience featuring hero campaigns, category shortcuts, and featured products.",
+      "states": {
+        "loading": "Skeleton loaders for hero banner and product grids.",
+        "empty": "N/A - Home should always have content.",
+        "error": "Failed to load feed message with a solid black 'Retry' button."
+      },
+      "layout": "1. Header: Left-aligned bold text logo, right-aligned icons (Search, Profile, Cart with dynamic counter badge).\n2. Hero Banner: Full-bleed image card (lg margin horizontal) with dark gradient scrim (top to bottom fade to #111111) and absolute positioned 'Shop Now' solid black CTA at bottom left.\n3. Category Pills: Horizontal scrollable flat pills (Sneakers, Boots, Loafers, Apparel). Active state: black bg/white text, Inactive: #F5F5F5 bg/charcoal text.\n4. Featured Categories: 2-column grid of image cards with text overlay.\n5. Product Showcase Grid: 2-column grid. Each card: 4:5 image, title, original price (strikethrough text in gray), discounted price (bold black text), solid black 'Add to Cart' button at the bottom.\n6. Footer / About: Clean typography-based footer with About Us, Contact, and social links."
+    },
+    {
+      "name": "ProductDetail",
+      "purpose": "Showcases the product intimately with a full-height image gallery, clear pricing, and a sticky 'Add to Cart' button.",
+      "states": {
+        "loading": "Spinner over white screen.",
+        "empty": "Product unavailable.",
+        "error": "Could not load product details. 'Go Back' button."
+      },
+      "layout": "1. Header: Back button left, Cart icon right.\n2. ScrollView: Full width product image gallery at the top. Below image: Title, bold price + strikethrough original price, Description paragraph.\n3. Sticky Footer: At the bottom (outside ScrollView, observing Safe Area), a full-width solid black 'Add to Cart' CTA."
+    },
+    {
+      "name": "Cart",
+      "purpose": "Review items, update quantities, and proceed to checkout with a minimalist overview.",
+      "states": {
+        "loading": "Loading cart items...",
+        "empty": "Illustration of an empty shopping bag, 'Your cart is empty' text, and 'Continue Shopping' CTA.",
+        "error": "Failed to load cart."
+      },
+      "layout": "1. Header: Screen title 'Cart'.\n2. List: Cart item rows (thumbnail, title, price, quantity increment/decrement controls).\n3. Footer: Subtotal row, solid black 'Checkout with Stripe' button."
+    }
+  ],
+  "images": {
+    "hero_banner": {
+      "url": "https://images.unsplash.com/photo-1627637454030-5ddd536e06e5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDR8MHwxfHNlYXJjaHwxfHxtYXNjdWxpbmUlMjBmYXNoaW9uJTIwYXBwYXJlbCUyMGZsYXRsYXl8ZW58MHx8fHwxNzg4MTYyMzYwfDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Masculine fashion model in urban setting with leather jacket"
+    },
+    "category_leather": {
+      "url": "https://images.unsplash.com/photo-1591717184624-7c0254a98dd9?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2ODl8MHwxfHNlYXJjaHwxfHxtZW4lMjBsZWF0aGVyJTIwYm9vdHMlMjBtaW5pbWFsfGVufDB8fHx8MTc4ODE2MjM2MHww&ixlib=rb-4.1.0&q=85",
+      "alt": "Black leather boots minimal"
+    },
+    "category_sneakers": {
+      "url": "https://images.unsplash.com/photo-1512374382149-233c42b6a83b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODd8MHwxfHNlYXJjaHwxfHxtZW4lMjBzaG9lcyUyMGZhc2hpb24lMjBwb3N0ZXJ8ZW58MHx8fHwxNzg4MTYyMzY3fDA&ixlib=rb-4.1.0&q=85",
+      "alt": "White high-top Nike sneakers"
+    },
+    "product_1": {
+      "url": "https://images.unsplash.com/photo-1479064555552-3ef4979f8908?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzV8MHwxfHNlYXJjaHwxfHxtZW4lMjBmYXNoaW9uJTIwYXBwYXJlbCUyMGZsYXRsYXl8ZW58MHx8fHwxNzg4MTYyMzYwfDA&ixlib=rb-4.1.0&q=85",
+      "alt": "Brown leather boots and flatlay"
+    },
+    "product_2": {
+      "url": "https://images.unsplash.com/photo-1677055089360-c2aa1ac5d20e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzV8MHwxfHNlYXJjaHwxfHxtZW4lMjBzbmVha2VyJTIwbWluaW1hbCUyMHN0dWRpb3xlbnwwfHx8fDE3ODgxNjIzNjB8MA&ixlib=rb-4.1.0&q=85",
+      "alt": "Sneakers on a minimal studio shelf"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Follow the minimalist, masculine palette strictly: absolute white backgrounds, dark gray/charcoal text, and solid black (#000000) for buttons and active states.",
+    "Do not use gradients, glassmorphism, or heavy shadows. Keep the UI extremely flat and sharp.",
+    "For the hero banner, ensure a gradient scrim is added between the image and the 'Shop Now' text to guarantee readability.",
+    "Typography must be clean and bold. Use Plus Jakarta Sans for headings and Geist for body text.",
+    "Use Phosphor icons consistently across the app. Keep strokes clean.",
+    "Product grid cards should have a 4:5 image aspect ratio. Do not clip the shoe images unnecessarily, use 'cover' with a clean #F5F5F5 background placeholder.",
+    "Implement the shopping cart badge logic so the counter increments clearly on the header cart icon."
+  ]
+}

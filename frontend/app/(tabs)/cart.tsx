@@ -16,6 +16,7 @@ import { router } from "expo-router";
 
 import { API, colors, radius, spacing } from "@/src/theme";
 import { formatPrice, lineKey, useCart } from "@/src/context/CartContext";
+import { resolveImage } from "@/src/utils/image";
 
 export default function CartScreen() {
   const insets = useSafeAreaInsets();
@@ -83,9 +84,11 @@ export default function CartScreen() {
           >
             {entries.map(([key, line]) => {
               const meta = [line.variant, line.size].filter(Boolean).join(" · ");
+              const variantMatch = line.product.variants?.find((v) => v.name === line.variant);
+              const thumbUri = resolveImage(variantMatch?.image ?? line.product.image);
               return (
                 <View key={key} style={styles.row} testID={`cart-line-${line.product.id}`}>
-                  <Image source={{ uri: line.product.image }} style={styles.thumb} />
+                  <Image source={{ uri: thumbUri }} style={styles.thumb} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.name} numberOfLines={2}>{line.product.name}</Text>
                     {meta ? <Text style={styles.meta}>{meta}</Text> : null}

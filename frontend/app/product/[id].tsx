@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { CATEGORIES, colors, radius, spacing, API } from "@/src/theme";
 import { formatPrice, Product, useCart } from "@/src/context/CartContext";
+import { resolveImage } from "@/src/utils/image";
 
 function categoryLabel(key: string) {
   const found = CATEGORIES.find((c) => c.key === key);
@@ -68,6 +69,15 @@ export default function ProductDetail() {
     return product.sku ?? null;
   }, [product, selectedVariant, hasVariants]);
 
+  const imageForSelection = useMemo(() => {
+    if (!product) return "";
+    if (hasVariants) {
+      const v = product.variants.find((vr) => vr.name === selectedVariant);
+      if (v?.image) return resolveImage(v.image);
+    }
+    return resolveImage(product.image);
+  }, [product, selectedVariant, hasVariants]);
+
   const handleAdd = () => {
     if (!product) return;
     addItem(product, { variant: selectedVariant, size: selectedSize });
@@ -103,7 +113,7 @@ export default function ProductDetail() {
         <>
           <ScrollView contentContainerStyle={{ paddingBottom: 160 }} showsVerticalScrollIndicator={false}>
             <View style={styles.gallery}>
-              <Image source={{ uri: product.image }} style={styles.image} />
+              <Image source={{ uri: imageForSelection }} style={styles.image} />
             </View>
             <View style={{ padding: spacing.lg, gap: spacing.md }}>
               {primaryCategory ? (

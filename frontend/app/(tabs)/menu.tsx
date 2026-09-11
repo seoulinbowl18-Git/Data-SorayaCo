@@ -2,14 +2,16 @@ import React from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@react-native-vector-icons/ionicons";
+import { router } from "expo-router";
 import { BRAND_NAME, PAYMENT_METHODS, colors, radius, spacing } from "@/src/theme";
 
-const LINKS: { key: string; label: string; icon: React.ComponentProps<typeof Ionicons>["name"] }[] = [
+const LINKS: { key: string; label: string; icon: React.ComponentProps<typeof Ionicons>["name"]; href?: string }[] = [
   { key: "about", label: "About Us", icon: "information-circle-outline" },
   { key: "contact", label: "Contact", icon: "mail-outline" },
   { key: "track", label: "Track Order", icon: "cube-outline" },
   { key: "shipping", label: "Shipping & Returns", icon: "airplane-outline" },
   { key: "faq", label: "FAQ", icon: "help-circle-outline" },
+  { key: "admin", label: "Admin Panel", icon: "shield-checkmark-outline", href: "/admin" },
 ];
 
 export default function MenuScreen() {
@@ -22,7 +24,12 @@ export default function MenuScreen() {
       </View>
       <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: 120 }}>
         {LINKS.map((l) => (
-          <Pressable key={l.key} style={styles.row} testID={`menu-${l.key}`}>
+          <Pressable
+            key={l.key}
+            style={styles.row}
+            testID={`menu-${l.key}`}
+            onPress={() => (l.href ? router.push(l.href as any) : undefined)}
+          >
             <Ionicons name={l.icon} size={20} color={colors.onSurface} />
             <Text style={styles.rowText}>{l.label}</Text>
             <Ionicons name="chevron-forward" size={18} color={colors.muted} />

@@ -5,6 +5,7 @@ export type Variant = {
   name: string;
   sku: string;
   stock: number;
+  image?: string | null;
 };
 
 export type Product = {

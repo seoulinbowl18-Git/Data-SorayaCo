@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Header
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -7,7 +8,7 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict
 from datetime import datetime, timezone, timedelta
 import secrets
 import uuid
@@ -41,6 +42,7 @@ class Variant(BaseModel):
     name: str
     sku: str
     stock: int
+    image: Optional[str] = None
 
 
 class Product(BaseModel):
@@ -58,6 +60,23 @@ class Product(BaseModel):
     variants: List[Variant] = []
 
 
+class ProductPatch(BaseModel):
+    name: Optional[str] = None
+    price: Optional[int] = None
+    original_price: Optional[int] = None
+    stock: Optional[int] = None
+    categories: Optional[List[str]] = None
+    description: Optional[str] = None
+    image: Optional[str] = None
+    sizes: Optional[List[str]] = None
+
+
+class Category(BaseModel):
+    key: str
+    label: str
+    image: Optional[str] = None
+
+
 class CartItem(BaseModel):
     product_id: str = Field(min_length=1)
     quantity: int = Field(gt=0, le=99)
@@ -71,7 +90,19 @@ class CheckoutRequest(BaseModel):
 
 
 # -------- Seed data (Soraya.Co) --------
+# Media served from /api/media (see StaticFiles mount).
+# Base is derived from APP_URL / PUBLIC_API_URL at request time so it works in
+# both preview and production without redeploy — but for baked-in URLs we use
+# the RELATIVE path prefixed with the media route. Frontend concatenates with
+# EXPO_PUBLIC_BACKEND_URL, so we store absolute-from-host paths starting with
+# "/api/media/..." and let the app prepend the API host.
 PLACEHOLDER_IMG = "https://placehold.co/800x1000/EAEAEA/1A1A1A?text=Soraya.Co"
+
+
+def media(path: str) -> str:
+    """Relative URL under /api/media/... — the app prepends its API host."""
+    return f"/api/media/{path}"
+
 
 OVERSIZE_BLOUSE_VARIANT_NAMES = [
     "Mika Grey", "Mika Dusty", "Nona Magenta", "Wilona", "Polka Hitam",
@@ -83,122 +114,163 @@ OVERSIZE_BLOUSE_VARIANT_NAMES = [
     "Marigold", "Sunflower", "Tulip", "Riyuki", "Aluna",
 ]
 
-SEED_PRODUCTS: List[dict] = [
-    {
-        "id": "oversize-blouse-motif",
-        "name": "Oversize Blouse Motif - Atasan Rayon Full Kancing Jumbo / Kemeja",
-        "categories": ["atasan"],
-        "image": PLACEHOLDER_IMG,
-        "price": 79000,
-        "original_price": None,
-        "description": (
-            "Kemeja oversize bahan rayon Uniqlo. Lingkar dada baju 130cm, "
-            "panjang baju depan \u00b170cm, panjang baju belakang \u00b180cm, "
-            "lingkar ketiak \u00b155cm."
-        ),
-        "currency": "idr",
-        "sizes": ["One Size"],
-        "sku": None,
-        "stock": None,
-        "variants": [
-            {"name": name, "sku": f"TRM-004-{i + 1}", "stock": 50}
-            for i, name in enumerate(OVERSIZE_BLOUSE_VARIANT_NAMES)
-        ],
-    },
-    {
-        "id": "blouse-kancing-depan",
-        "name": "Blouse Kancing Depan",
-        "categories": ["blouse"],
-        "image": PLACEHOLDER_IMG,
-        "price": 89000,
-        "original_price": None,
-        "description": "Blouse kerja/casual, bahan katun tidak menerawang.",
-        "currency": "idr",
-        "sizes": ["S", "M", "L"],
-        "sku": "BKD-007",
-        "stock": 60,
-        "variants": [],
-    },
-    {
-        "id": "tunik-rayon-maroon-polos",
-        "name": "Tunik Rayon Maroon Polos",
-        "categories": ["tunik-rayon"],
-        "image": PLACEHOLDER_IMG,
-        "price": 129000,
-        "original_price": None,
-        "description": "Bahan rayon adem, cocok dipakai harian, tersedia 5 warna.",
-        "currency": "idr",
-        "sizes": ["All Size (Fit L)"],
-        "sku": "TRM-001",
-        "stock": 45,
-        "variants": [],
-    },
-    {
-        "id": "gamis-maxy-motif-bunga",
-        "name": "Gamis Maxy Motif Bunga",
-        "categories": ["gamis-maxy"],
-        "image": PLACEHOLDER_IMG,
-        "price": 189000,
-        "original_price": None,
-        "description": "Motif bunga eksklusif, lengan panjang, resleting depan.",
-        "currency": "idr",
-        "sizes": ["L", "XL", "XXL"],
-        "sku": "GMB-014",
-        "stock": 20,
-        "variants": [],
-    },
-    {
-        "id": "midi-dress-rayon-polos",
-        "name": "Midi Dress Rayon Polos",
-        "categories": ["midi-dress"],
-        "image": PLACEHOLDER_IMG,
-        "price": 145000,
-        "original_price": None,
-        "description": "Model midi, cocok acara formal maupun santai.",
-        "currency": "idr",
-        "sizes": ["All Size"],
-        "sku": "MDR-022",
-        "stock": 15,
-        "variants": [],
-    },
-    {
-        "id": "setelan-kulot-rayon",
-        "name": "Setelan Kulot Rayon",
-        "categories": ["setelan"],
-        "image": PLACEHOLDER_IMG,
-        "price": 175000,
-        "original_price": None,
-        "description": "Set atasan + kulot, bahan rayon premium.",
-        "currency": "idr",
-        "sizes": ["M", "L", "XL"],
-        "sku": "SKR-003",
-        "stock": 30,
-        "variants": [],
-    },
-    {
-        "id": "piyama-set-katun-motif",
-        "name": "Piyama Set Katun Motif",
-        "categories": ["pyajamas"],
-        "image": PLACEHOLDER_IMG,
-        "price": 99000,
-        "original_price": None,
-        "description": "Piyama set atasan + celana, bahan katun lembut.",
-        "currency": "idr",
-        "sizes": ["All Size"],
-        "sku": "PSK-005",
-        "stock": 25,
-        "variants": [],
-    },
+# Category cover images (from Category App Android.xlsx).
+CATEGORY_COVERS: Dict[str, str] = {
+    "atasan": "category/atasan.jpg",
+    "blouse": "category/blouse.jpg",
+    "tunik-rayon": "category/tunik-rayon.jpg",
+    "gamis-maxy": "category/gamis-maxy.jpg",
+    "midi-dress": "category/midi-dress.jpg",
+    "setelan": "category/setelan.jpg",
+    "best-seller": "category/best-seller.jpg",
+    "pyajamas": "category/pyajamas.jpg",
+    "promo": "category/promo.png",
+    "reseller": "category/reseller.png",
+}
+
+CATEGORY_LABELS: List[tuple] = [
+    ("atasan", "Atasan (Top)"),
+    ("blouse", "Blouse"),
+    ("tunik-rayon", "Tunik Rayon"),
+    ("gamis-maxy", "Gamis Maxy"),
+    ("midi-dress", "Midi Dress"),
+    ("setelan", "Setelan"),
+    ("best-seller", "Best Seller"),
+    ("pyajamas", "Pyajamas"),
+    ("promo", "Promo"),
+    ("reseller", "Reseller"),
 ]
+
+
+def build_seed_products() -> List[dict]:
+    # Each of the 35 variants has its own image at product/<sku>.jpg
+    variants = [
+        {
+            "name": name,
+            "sku": f"TRM-004-{i + 1}",
+            "stock": 50,
+            "image": media(f"product/TRM-004-{i + 1}.jpg"),
+        }
+        for i, name in enumerate(OVERSIZE_BLOUSE_VARIANT_NAMES)
+    ]
+    return [
+        {
+            "id": "oversize-blouse-motif",
+            "name": "Oversize Blouse Motif - Atasan Rayon Full Kancing Jumbo / Kemeja",
+            "categories": ["atasan"],
+            # Cover uses the first variant's image so the grid card looks like a real product.
+            "image": media("product/TRM-004-1.jpg"),
+            "price": 79000,
+            "original_price": None,
+            "description": (
+                "Kemeja oversize bahan rayon Uniqlo. Lingkar dada baju 130cm, "
+                "panjang baju depan \u00b170cm, panjang baju belakang \u00b180cm, "
+                "lingkar ketiak \u00b155cm."
+            ),
+            "currency": "idr",
+            "sizes": ["One Size"],
+            "sku": None,
+            "stock": None,
+            "variants": variants,
+        },
+        {
+            "id": "blouse-kancing-depan",
+            "name": "Blouse Kancing Depan",
+            "categories": ["blouse"],
+            "image": PLACEHOLDER_IMG,
+            "price": 89000,
+            "original_price": None,
+            "description": "Blouse kerja/casual, bahan katun tidak menerawang.",
+            "currency": "idr",
+            "sizes": ["S", "M", "L"],
+            "sku": "BKD-007",
+            "stock": 60,
+            "variants": [],
+        },
+        {
+            "id": "tunik-rayon-maroon-polos",
+            "name": "Tunik Rayon Maroon Polos",
+            "categories": ["tunik-rayon"],
+            "image": PLACEHOLDER_IMG,
+            "price": 129000,
+            "original_price": None,
+            "description": "Bahan rayon adem, cocok dipakai harian, tersedia 5 warna.",
+            "currency": "idr",
+            "sizes": ["All Size (Fit L)"],
+            "sku": "TRM-001",
+            "stock": 45,
+            "variants": [],
+        },
+        {
+            "id": "gamis-maxy-motif-bunga",
+            "name": "Gamis Maxy Motif Bunga",
+            "categories": ["gamis-maxy"],
+            "image": PLACEHOLDER_IMG,
+            "price": 189000,
+            "original_price": None,
+            "description": "Motif bunga eksklusif, lengan panjang, resleting depan.",
+            "currency": "idr",
+            "sizes": ["L", "XL", "XXL"],
+            "sku": "GMB-014",
+            "stock": 20,
+            "variants": [],
+        },
+        {
+            "id": "midi-dress-rayon-polos",
+            "name": "Midi Dress Rayon Polos",
+            "categories": ["midi-dress"],
+            "image": PLACEHOLDER_IMG,
+            "price": 145000,
+            "original_price": None,
+            "description": "Model midi, cocok acara formal maupun santai.",
+            "currency": "idr",
+            "sizes": ["All Size"],
+            "sku": "MDR-022",
+            "stock": 15,
+            "variants": [],
+        },
+        {
+            "id": "setelan-kulot-rayon",
+            "name": "Setelan Kulot Rayon",
+            "categories": ["setelan"],
+            "image": PLACEHOLDER_IMG,
+            "price": 175000,
+            "original_price": None,
+            "description": "Set atasan + kulot, bahan rayon premium.",
+            "currency": "idr",
+            "sizes": ["M", "L", "XL"],
+            "sku": "SKR-003",
+            "stock": 30,
+            "variants": [],
+        },
+        {
+            "id": "piyama-set-katun-motif",
+            "name": "Piyama Set Katun Motif",
+            "categories": ["pyajamas"],
+            "image": PLACEHOLDER_IMG,
+            "price": 99000,
+            "original_price": None,
+            "description": "Piyama set atasan + celana, bahan katun lembut.",
+            "currency": "idr",
+            "sizes": ["All Size"],
+            "sku": "PSK-005",
+            "stock": 25,
+            "variants": [],
+        },
+    ]
 
 
 async def seed_products():
     # Migration: drop old-schema products (single `category` field) once.
     await db.products.delete_many({"categories": {"$exists": False}})
+    # Force reseed if products don't have real image URLs yet (e.g. still on placeholder).
+    stale = await db.products.count_documents({"id": "oversize-blouse-motif", "image": PLACEHOLDER_IMG})
+    if stale:
+        await db.products.delete_many({"id": {"$in": [p["id"] for p in build_seed_products()]}})
     count = await db.products.count_documents({})
     if count == 0:
-        await db.products.insert_many([dict(p) for p in SEED_PRODUCTS])
-        logger_init.info(f"Seeded {len(SEED_PRODUCTS)} Soraya.Co products")
+        await db.products.insert_many([dict(p) for p in build_seed_products()])
+        logger_init.info("Seeded Soraya.Co products with real images")
     # Ensure indexes
     await db.orders.create_index("order_id", unique=True)
     await db.stripe_events.create_index("event_id", unique=True)
@@ -266,6 +338,50 @@ async def get_product(product_id: str):
     if not doc:
         raise HTTPException(404, "Product not found")
     return Product(**doc)
+
+
+@api_router.get("/categories", response_model=List[Category])
+async def list_categories():
+    return [
+        Category(key=key, label=label, image=media(CATEGORY_COVERS[key]))
+        for key, label in CATEGORY_LABELS
+    ]
+
+
+# -------- Admin --------
+ADMIN_SECRET = os.environ.get("ADMIN_SECRET", "sorayaco-admin")
+
+
+def require_admin(x_admin_secret: Optional[str] = Header(None)):
+    if not x_admin_secret or x_admin_secret != ADMIN_SECRET:
+        raise HTTPException(401, "Unauthorized admin")
+
+
+@api_router.post("/admin/verify")
+async def admin_verify(x_admin_secret: Optional[str] = Header(None)):
+    require_admin(x_admin_secret)
+    return {"ok": True}
+
+
+@api_router.patch("/admin/products/{product_id}", response_model=Product)
+async def admin_update_product(
+    product_id: str,
+    patch: ProductPatch,
+    x_admin_secret: Optional[str] = Header(None),
+):
+    require_admin(x_admin_secret)
+    updates = {k: v for k, v in patch.model_dump().items() if v is not None}
+    if not updates:
+        raise HTTPException(400, "No fields to update")
+    result = await db.products.find_one_and_update(
+        {"id": product_id},
+        {"$set": updates},
+        return_document=True,
+        projection={"_id": 0},
+    )
+    if not result:
+        raise HTTPException(404, "Product not found")
+    return Product(**result)
 
 
 @api_router.post("/checkout/session")
@@ -464,6 +580,12 @@ async def logout(authorization: Optional[str] = Header(None)):
 
 # Include the router in the main app
 app.include_router(api_router)
+
+# Static media (product & category images) served under /api/media.
+# Path is relative to this file's parent so it works regardless of CWD.
+_MEDIA_DIR = ROOT_DIR / "static" / "media"
+_MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/api/media", StaticFiles(directory=str(_MEDIA_DIR)), name="media")
 
 app.add_middleware(
     CORSMiddleware,

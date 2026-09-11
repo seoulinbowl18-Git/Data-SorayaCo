@@ -18,44 +18,33 @@ import { router } from "expo-router";
 
 import { API, BRAND_NAME, CATEGORIES, PAYMENT_METHODS, colors, radius, spacing } from "@/src/theme";
 import { formatPrice, Product, useCart } from "@/src/context/CartContext";
+import { resolveImage } from "@/src/utils/image";
 
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?crop=entropy&cs=srgb&fm=jpg&q=85&w=1400";
 
-const FEATURED = [
-  {
-    key: "atasan",
-    title: "Atasan Rayon",
-    image:
-      "https://images.unsplash.com/photo-1617551307578-7f5160d6615e?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
-  },
-  {
-    key: "gamis-maxy",
-    title: "Gamis Maxy",
-    image:
-      "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
-  },
-  {
-    key: "setelan",
-    title: "Setelan",
-    image:
-      "https://images.unsplash.com/photo-1600271886742-f049cd451bba?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
-  },
-  {
-    key: "midi-dress",
-    title: "Midi Dress",
-    image:
-      "https://images.unsplash.com/photo-1596703263926-eb0762ee17e4?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
-  },
-];
+type ApiCategory = { key: string; label: string; image?: string | null };
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { count, addItem } = useCart();
   const [category, setCategory] = useState<string>("all");
   const [products, setProducts] = useState<Product[]>([]);
+  const [featured, setFeatured] = useState<ApiCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Load featured categories once
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${API}/api/categories`)
+      .then((r) => r.json())
+      .then((data) => !cancelled && setFeatured(data.slice(0, 4)))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -154,19 +143,21 @@ export default function HomeScreen() {
           <Text style={styles.sectionSub}>Pilihan favorit koleksi Soraya.Co.</Text>
         </View>
         <View style={styles.featuredGrid}>
-          {FEATURED.map((f) => (
+          {featured.map((f) => (
             <Pressable
               key={f.key}
               style={styles.featuredCard}
               testID={`featured-${f.key}`}
               onPress={() => setCategory(f.key)}
             >
-              <Image source={{ uri: f.image }} style={styles.featuredImage} />
+              {f.image ? (
+                <Image source={{ uri: resolveImage(f.image) }} style={styles.featuredImage} />
+              ) : null}
               <LinearGradient
                 colors={["transparent", "rgba(0,0,0,0.55)"]}
                 style={StyleSheet.absoluteFillObject}
               />
-              <Text style={styles.featuredTitle}>{f.title}</Text>
+              <Text style={styles.featuredTitle}>{f.label}</Text>
             </Pressable>
           ))}
         </View>
@@ -248,7 +239,7 @@ function ProductCard({ product, onAdd }: { product: Product; onAdd: () => void }
       testID={`product-card-${product.id}`}
     >
       <View style={styles.cardImageWrap}>
-        <Image source={{ uri: product.image }} style={styles.cardImage} />
+        <Image source={{ uri: resolveImage(product.image) }} style={styles.cardImage} />
       </View>
       <Text style={styles.cardTitle} numberOfLines={1}>{product.name}</Text>
       <View style={styles.priceRow}>

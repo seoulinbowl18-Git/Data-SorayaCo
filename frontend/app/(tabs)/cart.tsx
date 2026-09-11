@@ -15,20 +15,25 @@ import * as WebBrowser from "expo-web-browser";
 import { router } from "expo-router";
 
 import { API, colors, radius, spacing } from "@/src/theme";
-import { formatPrice, useCart } from "@/src/context/CartContext";
+import { formatPrice, lineKey, useCart } from "@/src/context/CartContext";
 
 export default function CartScreen() {
   const insets = useSafeAreaInsets();
   const { items, subtotal, count, increment, decrement, removeItem, clear } = useCart();
   const [busy, setBusy] = useState(false);
-  const lines = Object.values(items);
+  const entries = Object.entries(items);
 
   const checkout = async () => {
-    if (busy || lines.length === 0) return;
+    if (busy || entries.length === 0) return;
     setBusy(true);
     try {
       const payload = {
-        items: lines.map((l) => ({ product_id: l.product.id, quantity: l.quantity })),
+        items: entries.map(([, l]) => ({
+          product_id: l.product.id,
+          quantity: l.quantity,
+          variant: l.variant ?? null,
+          size: l.size ?? null,
+        })),
       };
       const res = await fetch(`${API}/api/checkout/session`, {
         method: "POST",
@@ -36,7 +41,7 @@ export default function CartScreen() {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.detail ?? "Checkout failed");
+      if (!res.ok) throw new Error(data?.detail ?? "Checkout gagal");
 
       if (Platform.OS === "web") {
         window.location.assign(data.checkout_url);
@@ -53,21 +58,21 @@ export default function CartScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <Text style={styles.title}>Cart</Text>
-        <Text style={styles.subtitle}>{count} item{count === 1 ? "" : "s"}</Text>
+        <Text style={styles.title}>Keranjang</Text>
+        <Text style={styles.subtitle}>{count} item</Text>
       </View>
 
-      {lines.length === 0 ? (
+      {entries.length === 0 ? (
         <View style={styles.empty} testID="empty-cart">
           <Ionicons name="bag-outline" size={64} color={colors.muted} />
-          <Text style={styles.emptyTitle}>Your bag is empty</Text>
-          <Text style={styles.emptyText}>Discover minimalist fashion built to last.</Text>
+          <Text style={styles.emptyTitle}>Keranjang kamu kosong</Text>
+          <Text style={styles.emptyText}>Yuk cek koleksi rayon terbaru dari Soraya.Co.</Text>
           <Pressable
             style={styles.continue}
             onPress={() => router.push("/(tabs)")}
             testID="continue-shopping-btn"
           >
-            <Text style={styles.continueText}>Continue Shopping</Text>
+            <Text style={styles.continueText}>Lanjut Belanja</Text>
           </Pressable>
         </View>
       ) : (
@@ -76,41 +81,45 @@ export default function CartScreen() {
             contentContainerStyle={{ padding: spacing.lg, paddingBottom: 220 }}
             showsVerticalScrollIndicator={false}
           >
-            {lines.map((line) => (
-              <View key={line.product.id} style={styles.row} testID={`cart-line-${line.product.id}`}>
-                <Image source={{ uri: line.product.image }} style={styles.thumb} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.name} numberOfLines={2}>{line.product.name}</Text>
-                  <Text style={styles.price}>{formatPrice(line.product.price)}</Text>
-                  <View style={styles.qtyRow}>
-                    <Pressable
-                      style={styles.qtyBtn}
-                      onPress={() => decrement(line.product.id)}
-                      testID={`decrement-${line.product.id}`}
-                    >
-                      <Ionicons name="remove" size={16} color={colors.onSurface} />
-                    </Pressable>
-                    <Text style={styles.qtyText}>{line.quantity}</Text>
-                    <Pressable
-                      style={styles.qtyBtn}
-                      onPress={() => increment(line.product.id)}
-                      testID={`increment-${line.product.id}`}
-                    >
-                      <Ionicons name="add" size={16} color={colors.onSurface} />
-                    </Pressable>
-                    <View style={{ flex: 1 }} />
-                    <Pressable
-                      onPress={() => removeItem(line.product.id)}
-                      testID={`remove-${line.product.id}`}
-                    >
-                      <Ionicons name="trash-outline" size={18} color={colors.muted} />
-                    </Pressable>
+            {entries.map(([key, line]) => {
+              const meta = [line.variant, line.size].filter(Boolean).join(" · ");
+              return (
+                <View key={key} style={styles.row} testID={`cart-line-${line.product.id}`}>
+                  <Image source={{ uri: line.product.image }} style={styles.thumb} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.name} numberOfLines={2}>{line.product.name}</Text>
+                    {meta ? <Text style={styles.meta}>{meta}</Text> : null}
+                    <Text style={styles.price}>{formatPrice(line.product.price)}</Text>
+                    <View style={styles.qtyRow}>
+                      <Pressable
+                        style={styles.qtyBtn}
+                        onPress={() => decrement(key)}
+                        testID={`decrement-${line.product.id}`}
+                      >
+                        <Ionicons name="remove" size={16} color={colors.onSurface} />
+                      </Pressable>
+                      <Text style={styles.qtyText}>{line.quantity}</Text>
+                      <Pressable
+                        style={styles.qtyBtn}
+                        onPress={() => increment(key)}
+                        testID={`increment-${line.product.id}`}
+                      >
+                        <Ionicons name="add" size={16} color={colors.onSurface} />
+                      </Pressable>
+                      <View style={{ flex: 1 }} />
+                      <Pressable
+                        onPress={() => removeItem(key)}
+                        testID={`remove-${line.product.id}`}
+                      >
+                        <Ionicons name="trash-outline" size={18} color={colors.muted} />
+                      </Pressable>
+                    </View>
                   </View>
                 </View>
-              </View>
-            ))}
+              );
+            })}
             <Pressable onPress={clear} style={{ padding: spacing.md, alignItems: "center" }}>
-              <Text style={{ color: colors.muted, fontWeight: "600" }}>Clear cart</Text>
+              <Text style={{ color: colors.muted, fontWeight: "600" }}>Kosongkan keranjang</Text>
             </Pressable>
           </ScrollView>
 
@@ -125,10 +134,10 @@ export default function CartScreen() {
               disabled={busy}
               testID="checkout-btn"
             >
-              <Text style={styles.checkoutText}>{busy ? "Opening Stripe…" : "Checkout with Stripe"}</Text>
+              <Text style={styles.checkoutText}>{busy ? "Membuka pembayaran…" : "Checkout Sekarang"}</Text>
               {!busy ? <Ionicons name="arrow-forward" size={16} color={colors.onBrand} /> : null}
             </Pressable>
-            <Text style={styles.footerNote}>Secure payments powered by Stripe · Test mode</Text>
+            <Text style={styles.footerNote}>Pembayaran aman · Test mode</Text>
           </View>
         </>
       )}
@@ -177,6 +186,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   name: { fontSize: 14, fontWeight: "700", color: colors.onSurface },
+  meta: { fontSize: 12, color: colors.muted, marginTop: 2, fontWeight: "600" },
   price: { marginTop: 4, fontSize: 14, fontWeight: "800", color: colors.onSurface },
 
   qtyRow: {

@@ -2,7 +2,7 @@ import React from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@react-native-vector-icons/ionicons";
-import { colors, radius, spacing } from "@/src/theme";
+import { BRAND_NAME, PAYMENT_METHODS, colors, radius, spacing } from "@/src/theme";
 
 const LINKS: { key: string; label: string; icon: React.ComponentProps<typeof Ionicons>["name"] }[] = [
   { key: "about", label: "About Us", icon: "information-circle-outline" },
@@ -18,7 +18,7 @@ export default function MenuScreen() {
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
         <Text style={styles.title}>Menu</Text>
-        <Text style={styles.subtitle}>BRODO · Built for the modern man.</Text>
+        <Text style={styles.subtitle}>{BRAND_NAME} · Fashion rayon nyaman untuk keseharian.</Text>
       </View>
       <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: 120 }}>
         {LINKS.map((l) => (
@@ -45,14 +45,14 @@ export default function MenuScreen() {
 
         <Text style={styles.section}>Payment methods</Text>
         <View style={styles.paymentsRow}>
-          {["Visa", "Mastercard", "Amex", "Stripe"].map((p) => (
-            <View key={p} style={styles.paymentPill}>
+          {PAYMENT_METHODS.map((p) => (
+            <View key={p} style={styles.paymentPill} testID={`payment-${p}`}>
               <Text style={styles.paymentText}>{p}</Text>
             </View>
           ))}
         </View>
 
-        <Text style={styles.copy}>© 2026 BRODO. All rights reserved.</Text>
+        <Text style={styles.copy}>© 2026 {BRAND_NAME}. All rights reserved.</Text>
       </ScrollView>
     </View>
   );

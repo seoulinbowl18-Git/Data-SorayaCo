@@ -1,0 +1,33 @@
+{
+  "summary": "Full backend + frontend testing for Soraya.Co rebrand. 17/17 backend pytest tests PASS. All 14 frontend spec requirements validated on mobile viewport (390x844): brand 'Soraya.Co', 11 category pills in exact order, Atasan filter, Best Seller empty state with Indonesian copy, 35 variant chips (TRM-004-1..35), 'One Size' size chip, selected-variant-name updates on tap, IDR price format 'Rp79.000' (dot thousand separator), 9 payment badges in footer + Menu tab, and composite-key cart lines (separate lines for Naomi vs Polka Hitam variants of same product).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py still uses deprecated @app.on_event startup/shutdown; consider migrating to FastAPI lifespan (non-blocking, carried over from iteration 1).",
+    "/api/checkout/success marks order paid on GET without Stripe verification. Anyone with the order_id can flip the state. Acceptable for demo/emergent test key, unsafe for production — use Stripe webhook (checkout.session.completed) as source of truth.",
+    "seed_products() migration `delete_many({'categories': {'$exists': False}})` runs every startup — safe but noisy. After the one-off cleanup completes it is a no-op; still worth gating with a version flag.",
+    "React-native-web Pressable on the variant chips: Playwright's .click(force=True) inside the horizontal ScrollView sometimes fails to trigger onPress (drag intercept). JS .click() works fine. Real user taps are unaffected, but during E2E tests this required using JS click. Not a product bug, flagged for future test harness."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py (rewritten for Soraya.Co spec — 17 tests)"
+  ],
+  "success_rate": {"backend": "100% (17/17)", "frontend": "100% (14/14 spec requirements)"},
+  "seed_data_creation": "None. Backend auto-seeds 7 Soraya.Co products on startup after migrating away from the old shoe schema.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Base URL EXPO_PUBLIC_BACKEND_URL=https://style-commerce-app-5.preview.emergentagent.com. Product ids: oversize-blouse-motif (35 variants TRM-004-1..35, stock 50 each, Rp79.000, One Size), blouse-kancing-depan (Rp89.000, sizes S/M/L), tunik-rayon-maroon-polos (Rp129.000), gamis-maxy-motif-bunga (Rp189.000), midi-dress-rayon-polos (Rp145.000), setelan-kulot-rayon (Rp175.000), piyama-set-katun-motif (Rp99.000). Category keys: all,atasan,blouse,tunik-rayon,gamis-maxy,midi-dress,setelan,best-seller,pyajamas,promo,reseller. Stripe checkout via emergentintegrations returns real checkout.stripe.com URL in IDR — DO NOT complete payment. Composite cart key is `{productId}::{variant}::{size}`. When automating variant chip taps use JS `element.click()` (Playwright force click is unreliable inside the horizontal variant ScrollView).",
+  "rca_of_issue": "N/A — all spec requirements pass. Verified: backend list/filter/detail endpoints, checkout session creation with variant+size in IDR (order persisted with currency=idr, total=79000*2, variant='Mika Grey', size='One Size'), 400 on bad product_id, 422 on empty items. Frontend: brand label 'Soraya.Co', exact 11-category order, Atasan pill returns only oversize-blouse-motif, Best Seller/Promo/Reseller pills render empty-state testID=empty-category with 'Belum ada produk di kategori ini.', product detail shows 35 variant-TRM-004-* chips and size-chip-One Size, selecting a variant updates selected-variant-name, prices render 'Rp79.000' style, 9 payment badges visible on Home footer and Menu tab, adding same product with two different variants creates 2 distinct cart-line entries with subtotal Rp158.000."
+}

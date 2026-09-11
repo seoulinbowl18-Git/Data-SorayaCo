@@ -1,35 +1,52 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+export type Variant = {
+  name: string;
+  sku: string;
+  stock: number;
+};
+
 export type Product = {
   id: string;
   name: string;
-  category: string;
+  categories: string[];
   image: string;
   price: number;
   original_price?: number | null;
   description: string;
   currency: string;
+  sizes: string[];
+  sku?: string | null;
+  stock?: number | null;
+  variants: Variant[];
 };
 
 export type CartLine = {
   product: Product;
   quantity: number;
+  variant?: string | null;
+  size?: string | null;
 };
 
 type CartState = {
   items: Record<string, CartLine>;
   count: number;
   subtotal: number;
-  addItem: (p: Product, qty?: number) => void;
-  increment: (id: string) => void;
-  decrement: (id: string) => void;
-  removeItem: (id: string) => void;
+  addItem: (p: Product, opts?: { variant?: string | null; size?: string | null; qty?: number }) => void;
+  increment: (key: string) => void;
+  decrement: (key: string) => void;
+  removeItem: (key: string) => void;
   clear: () => void;
 };
 
 const CartContext = createContext<CartState | null>(null);
-const STORAGE_KEY = "@brodo/cart";
+const STORAGE_KEY = "@sorayaco/cart";
+
+// Composite key so different variants/sizes of the same product live as separate lines.
+export function lineKey(productId: string, variant?: string | null, size?: string | null) {
+  return `${productId}::${variant ?? ""}::${size ?? ""}`;
+}
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<Record<string, CartLine>>({});
@@ -50,39 +67,48 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items)).catch(() => {});
   }, [items, hydrated]);
 
-  const addItem = useCallback((p: Product, qty = 1) => {
+  const addItem = useCallback<CartState["addItem"]>((p, opts) => {
+    const variant = opts?.variant ?? null;
+    const size = opts?.size ?? null;
+    const qty = opts?.qty ?? 1;
+    const key = lineKey(p.id, variant, size);
     setItems((prev) => {
-      const existing = prev[p.id];
+      const existing = prev[key];
       return {
         ...prev,
-        [p.id]: { product: p, quantity: (existing?.quantity ?? 0) + qty },
+        [key]: {
+          product: p,
+          quantity: (existing?.quantity ?? 0) + qty,
+          variant,
+          size,
+        },
       };
     });
   }, []);
 
-  const increment = useCallback((id: string) => {
+  const increment = useCallback((key: string) => {
     setItems((prev) => {
-      const line = prev[id];
+      const line = prev[key];
       if (!line) return prev;
-      return { ...prev, [id]: { ...line, quantity: line.quantity + 1 } };
+      return { ...prev, [key]: { ...line, quantity: line.quantity + 1 } };
     });
   }, []);
 
-  const decrement = useCallback((id: string) => {
+  const decrement = useCallback((key: string) => {
     setItems((prev) => {
-      const line = prev[id];
+      const line = prev[key];
       if (!line) return prev;
       if (line.quantity <= 1) {
-        const { [id]: _, ...rest } = prev;
+        const { [key]: _, ...rest } = prev;
         return rest;
       }
-      return { ...prev, [id]: { ...line, quantity: line.quantity - 1 } };
+      return { ...prev, [key]: { ...line, quantity: line.quantity - 1 } };
     });
   }, []);
 
-  const removeItem = useCallback((id: string) => {
+  const removeItem = useCallback((key: string) => {
     setItems((prev) => {
-      const { [id]: _, ...rest } = prev;
+      const { [key]: _, ...rest } = prev;
       return rest;
     });
   }, []);
@@ -119,7 +145,8 @@ export function useCart() {
   return ctx;
 }
 
-export function formatPrice(cents: number, currency = "USD") {
-  const dollars = cents / 100;
-  return `$${dollars.toFixed(2)}`;
+// Indonesian rupiah — thousands separated by dots, no decimals. e.g. Rp79.000
+export function formatPrice(amount: number) {
+  const whole = Math.round(amount).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `Rp${whole}`;
 }

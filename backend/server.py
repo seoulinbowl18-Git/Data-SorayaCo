@@ -37,20 +37,32 @@ api_router = APIRouter(prefix="/api")
 
 
 # -------- Models --------
+class Variant(BaseModel):
+    name: str
+    sku: str
+    stock: int
+
+
 class Product(BaseModel):
     id: str
     name: str
-    category: str  # sneakers | boots | loafers | apparel
+    categories: List[str]  # e.g. ["atasan"] or ["blouse", "best-seller"]
     image: str
-    price: int  # cents (IDR uses whole numbers, but keep cents for stripe -> using USD)
+    price: int  # whole rupiah (IDR is zero-decimal)
     original_price: Optional[int] = None
     description: str
-    currency: str = "usd"
+    currency: str = "idr"
+    sizes: List[str] = []
+    sku: Optional[str] = None
+    stock: Optional[int] = None
+    variants: List[Variant] = []
 
 
 class CartItem(BaseModel):
     product_id: str = Field(min_length=1)
     quantity: int = Field(gt=0, le=99)
+    variant: Optional[str] = None
+    size: Optional[str] = None
 
 
 class CheckoutRequest(BaseModel):
@@ -58,96 +70,135 @@ class CheckoutRequest(BaseModel):
     email: Optional[str] = None
 
 
-# -------- Seed data --------
+# -------- Seed data (Soraya.Co) --------
+PLACEHOLDER_IMG = "https://placehold.co/800x1000/EAEAEA/1A1A1A?text=Soraya.Co"
+
+OVERSIZE_BLOUSE_VARIANT_NAMES = [
+    "Mika Grey", "Mika Dusty", "Nona Magenta", "Wilona", "Polka Hitam",
+    "Aisha", "Freesia", "Shofia", "Lyodra", "Mawar",
+    "Leona", "Tamara", "Alana", "Lila", "Selina",
+    "Kamila", "Yura", "Sarah", "Marbel", "Naomi",
+    "Ferosa", "Sora Cream", "Iris", "Marlen", "Mesya",
+    "Clara", "Agnes", "Cunda", "Ameena", "Sania",
+    "Marigold", "Sunflower", "Tulip", "Riyuki", "Aluna",
+]
+
 SEED_PRODUCTS: List[dict] = [
     {
-        "id": "ace-nova-dark-brown",
-        "name": "Ace Nova Dark Brown",
-        "category": "sneakers",
-        "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
-        "price": 4900,
-        "original_price": 6500,
-        "description": "A refined take on the classic runner. Full-grain leather upper with a cushioned insole for all-day comfort.",
-        "currency": "usd",
-    },
-    {
-        "id": "ranger-boot-black",
-        "name": "Ranger Boot Black",
-        "category": "boots",
-        "image": "https://images.unsplash.com/photo-1520639888713-7851133b1ed0?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
-        "price": 8900,
+        "id": "oversize-blouse-motif",
+        "name": "Oversize Blouse Motif - Atasan Rayon Full Kancing Jumbo / Kemeja",
+        "categories": ["atasan"],
+        "image": PLACEHOLDER_IMG,
+        "price": 79000,
         "original_price": None,
-        "description": "Rugged silhouette meets clean lines. Water-resistant leather and lugged rubber outsole.",
-        "currency": "usd",
+        "description": (
+            "Kemeja oversize bahan rayon Uniqlo. Lingkar dada baju 130cm, "
+            "panjang baju depan \u00b170cm, panjang baju belakang \u00b180cm, "
+            "lingkar ketiak \u00b155cm."
+        ),
+        "currency": "idr",
+        "sizes": ["One Size"],
+        "sku": None,
+        "stock": None,
+        "variants": [
+            {"name": name, "sku": f"TRM-004-{i + 1}", "stock": 50}
+            for i, name in enumerate(OVERSIZE_BLOUSE_VARIANT_NAMES)
+        ],
     },
     {
-        "id": "milan-penny-loafer",
-        "name": "Milan Penny Loafer",
-        "category": "loafers",
-        "image": "https://images.unsplash.com/photo-1533867617858-e7b97e060509?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
-        "price": 7200,
-        "original_price": 9000,
-        "description": "Hand-stitched premium leather loafer with a moc-toe finish. Timeless.",
-        "currency": "usd",
-    },
-    {
-        "id": "core-heavy-tee",
-        "name": "Core Heavy Tee",
-        "category": "apparel",
-        "image": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
-        "price": 3500,
-        "original_price": 4500,
-        "description": "Heavyweight 240gsm cotton tee. Boxy relaxed fit for everyday wear.",
-        "currency": "usd",
-    },
-    {
-        "id": "runner-onyx",
-        "name": "Runner Onyx",
-        "category": "sneakers",
-        "image": "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
-        "price": 5600,
+        "id": "blouse-kancing-depan",
+        "name": "Blouse Kancing Depan",
+        "categories": ["blouse"],
+        "image": PLACEHOLDER_IMG,
+        "price": 89000,
         "original_price": None,
-        "description": "All-black low-top sneaker made for the daily grind.",
-        "currency": "usd",
+        "description": "Blouse kerja/casual, bahan katun tidak menerawang.",
+        "currency": "idr",
+        "sizes": ["S", "M", "L"],
+        "sku": "BKD-007",
+        "stock": 60,
+        "variants": [],
     },
     {
-        "id": "chelsea-tan",
-        "name": "Chelsea Tan",
-        "category": "boots",
-        "image": "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
-        "price": 7900,
-        "original_price": 9500,
-        "description": "Elastic-sided Chelsea boot in soft tan leather. A wardrobe staple.",
-        "currency": "usd",
-    },
-    {
-        "id": "harbor-loafer-navy",
-        "name": "Harbor Loafer Navy",
-        "category": "loafers",
-        "image": "https://images.unsplash.com/photo-1613987245117-50933bcb3240?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
-        "price": 6800,
+        "id": "tunik-rayon-maroon-polos",
+        "name": "Tunik Rayon Maroon Polos",
+        "categories": ["tunik-rayon"],
+        "image": PLACEHOLDER_IMG,
+        "price": 129000,
         "original_price": None,
-        "description": "Suede horsebit loafer in deep navy. Business meets casual.",
-        "currency": "usd",
+        "description": "Bahan rayon adem, cocok dipakai harian, tersedia 5 warna.",
+        "currency": "idr",
+        "sizes": ["All Size (Fit L)"],
+        "sku": "TRM-001",
+        "stock": 45,
+        "variants": [],
     },
     {
-        "id": "overshirt-charcoal",
-        "name": "Overshirt Charcoal",
-        "category": "apparel",
-        "image": "https://images.unsplash.com/photo-1602293589930-45aad59ba3ab?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
-        "price": 6200,
-        "original_price": 7900,
-        "description": "Structured cotton twill overshirt. Layer over tees and knits.",
-        "currency": "usd",
+        "id": "gamis-maxy-motif-bunga",
+        "name": "Gamis Maxy Motif Bunga",
+        "categories": ["gamis-maxy"],
+        "image": PLACEHOLDER_IMG,
+        "price": 189000,
+        "original_price": None,
+        "description": "Motif bunga eksklusif, lengan panjang, resleting depan.",
+        "currency": "idr",
+        "sizes": ["L", "XL", "XXL"],
+        "sku": "GMB-014",
+        "stock": 20,
+        "variants": [],
+    },
+    {
+        "id": "midi-dress-rayon-polos",
+        "name": "Midi Dress Rayon Polos",
+        "categories": ["midi-dress"],
+        "image": PLACEHOLDER_IMG,
+        "price": 145000,
+        "original_price": None,
+        "description": "Model midi, cocok acara formal maupun santai.",
+        "currency": "idr",
+        "sizes": ["All Size"],
+        "sku": "MDR-022",
+        "stock": 15,
+        "variants": [],
+    },
+    {
+        "id": "setelan-kulot-rayon",
+        "name": "Setelan Kulot Rayon",
+        "categories": ["setelan"],
+        "image": PLACEHOLDER_IMG,
+        "price": 175000,
+        "original_price": None,
+        "description": "Set atasan + kulot, bahan rayon premium.",
+        "currency": "idr",
+        "sizes": ["M", "L", "XL"],
+        "sku": "SKR-003",
+        "stock": 30,
+        "variants": [],
+    },
+    {
+        "id": "piyama-set-katun-motif",
+        "name": "Piyama Set Katun Motif",
+        "categories": ["pyajamas"],
+        "image": PLACEHOLDER_IMG,
+        "price": 99000,
+        "original_price": None,
+        "description": "Piyama set atasan + celana, bahan katun lembut.",
+        "currency": "idr",
+        "sizes": ["All Size"],
+        "sku": "PSK-005",
+        "stock": 25,
+        "variants": [],
     },
 ]
 
 
 async def seed_products():
+    # Migration: drop old-schema products (single `category` field) once.
+    await db.products.delete_many({"categories": {"$exists": False}})
     count = await db.products.count_documents({})
     if count == 0:
         await db.products.insert_many([dict(p) for p in SEED_PRODUCTS])
-        logger_init.info(f"Seeded {len(SEED_PRODUCTS)} products")
+        logger_init.info(f"Seeded {len(SEED_PRODUCTS)} Soraya.Co products")
     # Ensure indexes
     await db.orders.create_index("order_id", unique=True)
     await db.stripe_events.create_index("event_id", unique=True)
@@ -196,14 +247,15 @@ async def get_current_user(authorization: Optional[str] = Header(None)) -> dict:
 # -------- Routes --------
 @api_router.get("/")
 async def root():
-    return {"message": "BroDo Style API"}
+    return {"message": "Soraya.Co API"}
 
 
 @api_router.get("/products", response_model=List[Product])
 async def list_products(category: Optional[str] = None):
     query = {}
     if category and category.lower() != "all":
-        query["category"] = category.lower()
+        # `categories` is an array — match any product where the tag is present.
+        query["categories"] = category.lower()
     cursor = db.products.find(query, {"_id": 0})
     return [Product(**doc) async for doc in cursor]
 
@@ -228,10 +280,11 @@ async def create_checkout_session(payload: CheckoutRequest, request: Request):
     order_id = f"ord_{secrets.token_urlsafe(10)}"
     total = 0
     order_items = []
+    currency = "idr"
     for it in payload.items:
         p = products_map[it.product_id]
         unit_amount = int(p["price"])
-        currency = p["currency"].lower()
+        currency = p.get("currency", "idr").lower()
         total += unit_amount * it.quantity
         order_items.append({
             "product_id": p["id"],
@@ -239,6 +292,8 @@ async def create_checkout_session(payload: CheckoutRequest, request: Request):
             "unit_amount": unit_amount,
             "currency": currency,
             "quantity": it.quantity,
+            "variant": it.variant,
+            "size": it.size,
         })
 
     # Base URL from request (public preview URL). Falls back to env if configured.
@@ -249,16 +304,21 @@ async def create_checkout_session(payload: CheckoutRequest, request: Request):
         "status": "pending",
         "items": order_items,
         "total": total,
+        "currency": currency,
         "email": payload.email,
         "created_at": datetime.now(timezone.utc),
     })
 
     try:
         checkout = StripeCheckout(api_key=STRIPE_API_KEY)
+        # IDR is zero-decimal on Stripe (min unit = 1 IDR).
+        # emergentintegrations takes the human-readable amount and applies
+        # currency-appropriate handling internally.
+        stripe_amount = float(total)
         session_req = CheckoutSessionRequest(
-            amount=total / 100.0,  # emergentintegrations expects float dollars
-            currency="usd",
-            metadata={"order_id": order_id, "source": "brodo-app"},
+            amount=stripe_amount,
+            currency=currency,
+            metadata={"order_id": order_id, "source": "soraya-co-app"},
             success_url=f"{base_url}/api/checkout/success?session_id={{CHECKOUT_SESSION_ID}}&order_id={order_id}",
             cancel_url=f"{base_url}/api/checkout/cancel?order_id={order_id}",
         )
@@ -289,7 +349,7 @@ async def checkout_success(session_id: Optional[str] = None, order_id: Optional[
         <div style='max-width:420px;margin:0 auto'>
         <div style='font-size:64px'>✓</div>
         <h1 style='font-weight:800;font-size:28px;margin:16px 0 8px'>Payment received</h1>
-        <p style='color:#555;margin:0 0 32px'>Thanks for shopping with BroDo. You can now return to the app.</p>
+        <p style='color:#555;margin:0 0 32px'>Terima kasih sudah berbelanja di Soraya.Co. Silakan kembali ke aplikasi.</p>
         <a href='#' onclick='window.close();return false' style='display:inline-block;background:#000;color:#fff;padding:14px 28px;text-decoration:none;font-weight:700'>Close</a>
         </div></body></html>
         """

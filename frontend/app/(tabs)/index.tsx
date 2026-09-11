@@ -16,36 +16,36 @@ import Ionicons from "@react-native-vector-icons/ionicons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 
-import { API, CATEGORIES, colors, radius, spacing } from "@/src/theme";
+import { API, BRAND_NAME, CATEGORIES, PAYMENT_METHODS, colors, radius, spacing } from "@/src/theme";
 import { formatPrice, Product, useCart } from "@/src/context/CartContext";
 
 const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1627637454030-5ddd536e06e5?crop=entropy&cs=srgb&fm=jpg&q=85&w=1400";
+  "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?crop=entropy&cs=srgb&fm=jpg&q=85&w=1400";
 
 const FEATURED = [
   {
-    key: "leather",
-    title: "Leather Collection",
+    key: "atasan",
+    title: "Atasan Rayon",
     image:
-      "https://images.unsplash.com/photo-1591717184624-7c0254a98dd9?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
+      "https://images.unsplash.com/photo-1617551307578-7f5160d6615e?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
   },
   {
-    key: "daily",
-    title: "Daily Sneakers",
+    key: "gamis-maxy",
+    title: "Gamis Maxy",
     image:
-      "https://images.unsplash.com/photo-1512374382149-233c42b6a83b?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
+      "https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
   },
   {
-    key: "boots",
-    title: "Rugged Boots",
+    key: "setelan",
+    title: "Setelan",
     image:
-      "https://images.unsplash.com/photo-1520639888713-7851133b1ed0?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
+      "https://images.unsplash.com/photo-1600271886742-f049cd451bba?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
   },
   {
-    key: "essentials",
-    title: "Essentials",
+    key: "midi-dress",
+    title: "Midi Dress",
     image:
-      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
+      "https://images.unsplash.com/photo-1596703263926-eb0762ee17e4?crop=entropy&cs=srgb&fm=jpg&q=85&w=800",
   },
 ];
 
@@ -82,7 +82,7 @@ export default function HomeScreen() {
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       {/* Sticky Header */}
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <Text style={styles.logo} testID="app-logo">BRODO.</Text>
+        <Text style={styles.logo} testID="app-logo">{BRAND_NAME}</Text>
         <View style={styles.headerActions}>
           <Pressable style={styles.iconBtn} testID="search-btn" onPress={() => {}}>
             <Ionicons name="search-outline" size={22} color={colors.onSurface} />
@@ -117,10 +117,10 @@ export default function HomeScreen() {
             style={StyleSheet.absoluteFillObject}
           />
           <View style={styles.heroContent}>
-            <Text style={styles.heroKicker}>SS26 · The New Uniform</Text>
-            <Text style={styles.heroTitle}>Made for the{`\n`}Modern Everyday.</Text>
+            <Text style={styles.heroKicker}>KOLEKSI TERBARU</Text>
+            <Text style={styles.heroTitle}>Rayon Premium,{`\n`}Nyaman Setiap Hari.</Text>
             <Pressable style={styles.heroCta} onPress={shopNow} testID="shop-now-btn">
-              <Text style={styles.heroCtaText}>Shop Now</Text>
+              <Text style={styles.heroCtaText}>Belanja Sekarang</Text>
               <Ionicons name="arrow-forward" size={16} color={colors.onBrand} />
             </Pressable>
           </View>
@@ -151,7 +151,7 @@ export default function HomeScreen() {
         {/* Featured categories */}
         <View style={styles.sectionHead}>
           <Text style={styles.sectionTitle}>Featured Categories</Text>
-          <Text style={styles.sectionSub}>Curated picks for the season.</Text>
+          <Text style={styles.sectionSub}>Pilihan favorit koleksi Soraya.Co.</Text>
         </View>
         <View style={styles.featuredGrid}>
           {FEATURED.map((f) => (
@@ -159,7 +159,7 @@ export default function HomeScreen() {
               key={f.key}
               style={styles.featuredCard}
               testID={`featured-${f.key}`}
-              onPress={() => {}}
+              onPress={() => setCategory(f.key)}
             >
               <Image source={{ uri: f.image }} style={styles.featuredImage} />
               <LinearGradient
@@ -173,8 +173,8 @@ export default function HomeScreen() {
 
         {/* Product grid */}
         <View style={styles.sectionHead}>
-          <Text style={styles.sectionTitle}>New Arrivals</Text>
-          <Text style={styles.sectionSub}>Hand-crafted, priced honestly.</Text>
+          <Text style={styles.sectionTitle}>Produk Terbaru</Text>
+          <Text style={styles.sectionSub}>Dibuat rapi, harga jujur.</Text>
         </View>
         {loading ? (
           <View style={styles.center}> 
@@ -183,6 +183,13 @@ export default function HomeScreen() {
         ) : error ? (
           <View style={styles.center}>
             <Text style={{ color: colors.muted }}>{error}</Text>
+          </View>
+        ) : products.length === 0 ? (
+          <View style={styles.center} testID="empty-category">
+            <Ionicons name="pricetags-outline" size={40} color={colors.muted} />
+            <Text style={{ color: colors.muted, marginTop: spacing.md, fontWeight: "600" }}>
+              Belum ada produk di kategori ini.
+            </Text>
           </View>
         ) : (
           <View style={styles.productGrid}>
@@ -194,8 +201,8 @@ export default function HomeScreen() {
 
         {/* Footer */}
         <View style={styles.footer} testID="footer">
-          <Text style={styles.footerBrand}>BRODO.</Text>
-          <Text style={styles.footerTag}>Built for the modern man.</Text>
+          <Text style={styles.footerBrand}>{BRAND_NAME}</Text>
+          <Text style={styles.footerTag}>Fashion rayon nyaman untuk keseharian.</Text>
 
           <View style={styles.footerLinks}>
             <Pressable testID="footer-about"><Text style={styles.footerLink}>About Us</Text></Pressable>
@@ -213,14 +220,14 @@ export default function HomeScreen() {
 
           <Text style={styles.paymentsLabel}>We accept</Text>
           <View style={styles.paymentsRow}>
-            {["Visa", "Mastercard", "Amex", "Stripe"].map((p) => (
-              <View key={p} style={styles.paymentPill}>
+            {PAYMENT_METHODS.map((p) => (
+              <View key={p} style={styles.paymentPill} testID={`payment-${p}`}>
                 <Text style={styles.paymentText}>{p}</Text>
               </View>
             ))}
           </View>
 
-          <Text style={styles.copy}>© 2026 BRODO. All rights reserved.</Text>
+          <Text style={styles.copy}>© 2026 {BRAND_NAME}. All rights reserved.</Text>
         </View>
       </ScrollView>
     </View>

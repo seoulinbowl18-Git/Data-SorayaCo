@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@react-native-vector-icons/ionicons";
 import { router } from "expo-router";
 
-import { colors, radius, spacing } from "@/src/theme";
+import { BRAND_NAME, colors, radius, spacing } from "@/src/theme";
 import { useAuth } from "@/src/context/AuthContext";
 
 export default function LoginScreen() {
@@ -52,7 +52,7 @@ export default function LoginScreen() {
           source={{ uri: "https://images.unsplash.com/photo-1520639888713-7851133b1ed0?crop=entropy&cs=srgb&fm=jpg&q=85&w=800" }}
           style={styles.hero}
         />
-        <Text style={styles.brand}>BRODO.</Text>
+        <Text style={styles.brand}>{BRAND_NAME}</Text>
         <Text style={styles.title}>Sign in to your account</Text>
         <Text style={styles.subtitle}>
           Save your bag, track orders, and check out faster next time.

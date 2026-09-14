@@ -69,6 +69,7 @@ class ProductPatch(BaseModel):
     description: Optional[str] = None
     image: Optional[str] = None
     sizes: Optional[List[str]] = None
+    variants: Optional[List[Variant]] = None
 
 
 class Category(BaseModel):
@@ -175,17 +176,34 @@ def build_seed_products() -> List[dict]:
         },
         {
             "id": "blouse-kancing-depan",
-            "name": "Blouse Kancing Depan",
+            "name": "Alysa Blouse - Atasan Wanita Rayon Motif Kerah Shanghai",
             "categories": ["blouse"],
-            "image": PLACEHOLDER_IMG,
+            "image": media("product/BKD-001.jpg"),
             "price": 89000,
             "original_price": None,
-            "description": "Blouse kerja/casual, bahan katun tidak menerawang.",
+            "description": (
+                "Bahan: Rayon Premium\n"
+                "Tersedia 3 ukuran:\n"
+                "\u2022 Standar (L) — LD 110 cm\n"
+                "\u2022 Jumbo (XL) — LD 120 cm\n"
+                "\u2022 Super Jumbo (XXL) — LD 130 cm\n"
+                "Model: Kerah Shanghai\n"
+                "Pergelangan tangan model terompet.\n"
+                "\n"
+                "Berat produk 200 gram. Dimensi paket 3\u202fcm x 3\u202fcm x 3\u202fcm."
+            ),
             "currency": "idr",
-            "sizes": ["S", "M", "L"],
-            "sku": "BKD-007",
-            "stock": 60,
-            "variants": [],
+            "sizes": ["L", "XL", "XXL"],
+            "sku": None,
+            "stock": None,
+            "variants": [
+                {"name": "LB. Alysa",       "sku": "BKD-001", "stock": 60, "image": media("product/BKD-001.jpg")},
+                {"name": "LB. Erica",       "sku": "BKD-002", "stock": 60, "image": media("product/BKD-002.jpg")},
+                {"name": "LB. Lavender",    "sku": "BKD-003", "stock": 60, "image": media("product/BKD-003.jpg")},
+                {"name": "LB. Tiara",       "sku": "BKD-004", "stock": 60, "image": media("product/BKD-004.jpg")},
+                {"name": "LB. Luna Black",  "sku": "BKD-005", "stock": 60, "image": media("product/BKD-005.jpg")},
+                {"name": "LB. Saskia",      "sku": "BKD-006", "stock": 60, "image": media("product/BKD-006.jpg")},
+            ],
         },
         {
             "id": "tunik-rayon-maroon-polos",

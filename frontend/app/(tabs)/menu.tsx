@@ -19,7 +19,7 @@ export default function MenuScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
-        <Text style={styles.title}>Menu</Text>
+        <Text style={styles.title}>Profil</Text>
         <Text style={styles.subtitle}>{BRAND_NAME} · Fashion rayon nyaman untuk keseharian.</Text>
       </View>
       <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: 120 }}>
